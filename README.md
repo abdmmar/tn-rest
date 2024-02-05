@@ -13,6 +13,5 @@ Before installing `sqlc` using `go` make sure you already set the environment va
 ```sh
 // .zshrc
 export GOPATH=$HOME/go
-export PATH=$GOPATH/bin:$PATH
 export GOBIN=$GOPATH/bin
 ```
