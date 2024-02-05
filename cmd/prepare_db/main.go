@@ -12,13 +12,13 @@ import (
 
 func prepareDatabase(dbx db.DBTX) {
 	ctx := context.Background()
-	if _, err := dbx.ExecContext(ctx, sqlc.DDL); err == nil {
+	if _, err := dbx.ExecContext(ctx, sqlc.DDL); err != nil {
 		fmt.Println("err", err)
 	}
 }
 
 func main(){
-	dbx, err := sql.Open("sqlite3", "db.sqlite3")
+	dbx, err := sql.Open("sqlite3", "db.sqlite")
 	if err != nil {
 		panic(err)
 	}
