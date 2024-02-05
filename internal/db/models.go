@@ -38,7 +38,7 @@ type License struct {
 
 type NationalPark struct {
 	ID                  int64
-	Name                interface{}
+	Name                sql.NullString
 	Link                sql.NullString
 	Year                sql.NullInt64
 	TotalAreaInKm       sql.NullInt64

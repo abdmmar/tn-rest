@@ -124,7 +124,7 @@ VALUES
 `
 
 type CreateNationalParkParams struct {
-	Name                interface{}
+	Name                sql.NullString
 	Description         sql.NullString
 	Region              sql.NullString
 	Link                sql.NullString
@@ -250,6 +250,111 @@ func (q *Queries) GetLicenseByName(ctx context.Context, name sql.NullString) (Li
 	return i, err
 }
 
+const getNationalPark = `-- name: GetNationalPark :one
+SELECT
+  np.id AS id,
+  np.name AS name,
+  np.description AS description,
+  np.region AS region,
+  JSON_GROUP_ARRAY(
+    JSON_OBJECT(
+      'id',
+      img.id,
+      'link',
+      img.link,
+      'title',
+      img.title,
+      'date',
+      img.date,
+      'source',
+      img.source,
+      'author',
+      img.author,
+      'src',
+      img.src
+    )
+  ) AS images,
+  JSON_GROUP_ARRAY(
+    JSON_OBJECT(
+      'id',
+      intl.id,
+      'name',
+      intl.name,
+      'link',
+      intl.link
+    )
+  ) as intl_statuses,
+  JSON_OBJECT(
+    'km',
+    np.total_area_in_km,
+    'miles',
+    np.total_area_in_miles
+  ) as total_area,
+  JSON_OBJECT(
+    'lat',
+    np.coordinate_latitude,
+    'long',
+    np.coordinate_longitude
+  ) as coordinate,
+  np.water_percentages AS water_percentages,
+  np.map_url AS map_url,
+  np.location AS location,
+  np.established AS established_year,
+  np.visitors AS visitors,
+  np.management AS management
+FROM
+  national_park np
+  LEFT JOIN national_park_image npi ON np.id = npi.national_park_id
+  LEFT JOIN image img ON npi.image_id = img.id
+  LEFT JOIN image_license il ON img.id = il.image_id
+  LEFT JOIN license lic ON il.license_id = lic.id
+  LEFT JOIN national_park_intl_status nps ON np.id = nps.national_park_id
+  LEFT JOIN intl_status intl ON nps.intl_status_id = intl.id
+WHERE
+  np.name = ?
+GROUP BY
+  np.id
+`
+
+type GetNationalParkRow struct {
+	ID               int64
+	Name             sql.NullString
+	Description      sql.NullString
+	Region           sql.NullString
+	Images           interface{}
+	IntlStatuses     interface{}
+	TotalArea        interface{}
+	Coordinate       interface{}
+	WaterPercentages sql.NullString
+	MapUrl           sql.NullString
+	Location         sql.NullString
+	EstablishedYear  sql.NullInt64
+	Visitors         sql.NullString
+	Management       sql.NullString
+}
+
+func (q *Queries) GetNationalPark(ctx context.Context, name sql.NullString) (GetNationalParkRow, error) {
+	row := q.db.QueryRowContext(ctx, getNationalPark, name)
+	var i GetNationalParkRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Region,
+		&i.Images,
+		&i.IntlStatuses,
+		&i.TotalArea,
+		&i.Coordinate,
+		&i.WaterPercentages,
+		&i.MapUrl,
+		&i.Location,
+		&i.EstablishedYear,
+		&i.Visitors,
+		&i.Management,
+	)
+	return i, err
+}
+
 const getNationalParks = `-- name: GetNationalParks :many
 SELECT
   np.id AS id,
@@ -277,11 +382,11 @@ SELECT
   JSON_GROUP_ARRAY(
     JSON_OBJECT(
       'id',
-      intl_status.id,
+      intl.id,
       'name',
-      intl_status.name,
+      intl.name,
       'link',
-      intl_status.link
+      intl.link
     )
   ) as intl_statuses,
   JSON_OBJECT(
@@ -316,7 +421,7 @@ GROUP BY
 
 type GetNationalParksRow struct {
 	ID               int64
-	Name             interface{}
+	Name             sql.NullString
 	Description      sql.NullString
 	Region           sql.NullString
 	Images           interface{}
