@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"tn-rest/internal/db"
@@ -104,9 +105,14 @@ func CreateNationalPark(queries *db.Queries, ctx context.Context, dbx *sql.DB) e
 	return tx.Commit()
 }
 
+func dump(data interface{}){
+	b,_:=json.MarshalIndent(data, "", "  ")
+	fmt.Print(string(b))
+}
+
 func main () {
 	ctx := context.Background()
-	dbx, err := sql.Open("sqlite3", "db.sqlite")
+	dbx, err := sql.Open("sqlite3", "national_park.db")
 	
 	if err != nil {
 		panic(err)
@@ -125,6 +131,6 @@ func main () {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println(rows)
+	
+	dump(rows)
 }

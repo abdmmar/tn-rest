@@ -18,7 +18,7 @@ func prepareDatabase(dbx db.DBTX) {
 }
 
 func main(){
-	dbx, err := sql.Open("sqlite3", "db.sqlite")
+	dbx, err := sql.Open("sqlite3", "national_park.db")
 	if err != nil {
 		panic(err)
 	}
