@@ -4,7 +4,6 @@ dev:
 	sqlc generate;\
 	go run \
 		cmd/server/main.go \
-		cmd/server/router.go \
 		cmd/server/national_park.go
 
 prepare-db:
