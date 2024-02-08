@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createImage = `-- name: CreateImage :one
@@ -25,12 +24,12 @@ VALUES
 `
 
 type CreateImageParams struct {
-	Link   sql.NullString
-	Title  sql.NullString
-	Date   sql.NullString
-	Source sql.NullString
-	Author sql.NullString
-	Src    sql.NullString
+	Link   string
+	Title  string
+	Date   *string
+	Source *string
+	Author *string
+	Src    *string
 }
 
 func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (int64, error) {
@@ -54,8 +53,8 @@ INSERT INTO image_license (
 `
 
 type CreateImageLicenseParams struct {
-	ImageID   sql.NullInt64
-	LicenseID sql.NullInt64
+	ImageID   int64
+	LicenseID int64
 }
 
 func (q *Queries) CreateImageLicense(ctx context.Context, arg CreateImageLicenseParams) error {
@@ -70,8 +69,8 @@ INSERT INTO intl_status (
 `
 
 type CreateIntlStatusParams struct {
-	Name sql.NullString
-	Link sql.NullString
+	Name string
+	Link *string
 }
 
 func (q *Queries) CreateIntlStatus(ctx context.Context, arg CreateIntlStatusParams) (int64, error) {
@@ -88,9 +87,9 @@ INSERT INTO license (
 `
 
 type CreateLicenseParams struct {
-	Type sql.NullString
-	Name sql.NullString
-	Link sql.NullString
+	Type string
+	Name string
+	Link *string
 }
 
 func (q *Queries) CreateLicense(ctx context.Context, arg CreateLicenseParams) (int64, error) {
@@ -107,7 +106,6 @@ INSERT INTO
     description,
     region,
     link,
-    year,
     total_area_in_km,
     total_area_in_miles,
     water_percentages,
@@ -115,30 +113,29 @@ INSERT INTO
     coordinate_longitude,
     map_url,
     location,
-    established,
+    established_year,
     visitors,
     management
   )
 VALUES
-  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id
+  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id
 `
 
 type CreateNationalParkParams struct {
-	Name                sql.NullString
-	Description         sql.NullString
-	Region              sql.NullString
-	Link                sql.NullString
-	Year                sql.NullInt64
-	TotalAreaInKm       sql.NullInt64
-	TotalAreaInMiles    sql.NullInt64
-	WaterPercentages    sql.NullString
-	CoordinateLatitude  sql.NullFloat64
-	CoordinateLongitude sql.NullFloat64
-	MapUrl              sql.NullString
-	Location            sql.NullString
-	Established         sql.NullInt64
-	Visitors            sql.NullString
-	Management          sql.NullString
+	Name                string
+	Description         string
+	Region              string
+	Link                *string
+	TotalAreaInKm       *int64
+	TotalAreaInMiles    *int64
+	WaterPercentages    *string
+	CoordinateLatitude  float64
+	CoordinateLongitude float64
+	MapUrl              *string
+	Location            string
+	EstablishedYear     int64
+	Visitors            *string
+	Management          *string
 }
 
 func (q *Queries) CreateNationalPark(ctx context.Context, arg CreateNationalParkParams) (int64, error) {
@@ -147,7 +144,6 @@ func (q *Queries) CreateNationalPark(ctx context.Context, arg CreateNationalPark
 		arg.Description,
 		arg.Region,
 		arg.Link,
-		arg.Year,
 		arg.TotalAreaInKm,
 		arg.TotalAreaInMiles,
 		arg.WaterPercentages,
@@ -155,7 +151,7 @@ func (q *Queries) CreateNationalPark(ctx context.Context, arg CreateNationalPark
 		arg.CoordinateLongitude,
 		arg.MapUrl,
 		arg.Location,
-		arg.Established,
+		arg.EstablishedYear,
 		arg.Visitors,
 		arg.Management,
 	)
@@ -171,8 +167,8 @@ INSERT INTO national_park_image (
 `
 
 type CreateNationalParkImageParams struct {
-	NationalParkID sql.NullInt64
-	ImageID        sql.NullInt64
+	NationalParkID int64
+	ImageID        int64
 }
 
 func (q *Queries) CreateNationalParkImage(ctx context.Context, arg CreateNationalParkImageParams) error {
@@ -187,8 +183,8 @@ INSERT INTO national_park_intl_status (
 `
 
 type CreateNationalParkIntlStatusParams struct {
-	NationalParkID sql.NullInt64
-	IntlStatusID   sql.NullInt64
+	NationalParkID int64
+	IntlStatusID   int64
 }
 
 func (q *Queries) CreateNationalParkIntlStatus(ctx context.Context, arg CreateNationalParkIntlStatusParams) error {
@@ -211,7 +207,7 @@ const getIntlStatusByName = `-- name: GetIntlStatusByName :one
 SELECT id, name, link FROM intl_status WHERE name = ? LIMIT 1
 `
 
-func (q *Queries) GetIntlStatusByName(ctx context.Context, name sql.NullString) (IntlStatus, error) {
+func (q *Queries) GetIntlStatusByName(ctx context.Context, name string) (IntlStatus, error) {
 	row := q.db.QueryRowContext(ctx, getIntlStatusByName, name)
 	var i IntlStatus
 	err := row.Scan(&i.ID, &i.Name, &i.Link)
@@ -238,7 +234,7 @@ const getLicenseByName = `-- name: GetLicenseByName :one
 SELECT id, type, name, link FROM license WHERE name = ? LIMIT 1
 `
 
-func (q *Queries) GetLicenseByName(ctx context.Context, name sql.NullString) (License, error) {
+func (q *Queries) GetLicenseByName(ctx context.Context, name string) (License, error) {
 	row := q.db.QueryRowContext(ctx, getLicenseByName, name)
 	var i License
 	err := row.Scan(
@@ -299,7 +295,7 @@ SELECT
   np.water_percentages AS water_percentages,
   np.map_url AS map_url,
   np.location AS location,
-  np.established AS established_year,
+  np.established_year AS established_year,
   np.visitors AS visitors,
   np.management AS management
 FROM
@@ -318,22 +314,22 @@ GROUP BY
 
 type GetNationalParkRow struct {
 	ID               int64
-	Name             sql.NullString
-	Description      sql.NullString
-	Region           sql.NullString
+	Name             string
+	Description      string
+	Region           string
 	Images           interface{}
 	IntlStatuses     interface{}
 	TotalArea        interface{}
 	Coordinate       interface{}
-	WaterPercentages sql.NullString
-	MapUrl           sql.NullString
-	Location         sql.NullString
-	EstablishedYear  sql.NullInt64
-	Visitors         sql.NullString
-	Management       sql.NullString
+	WaterPercentages *string
+	MapUrl           *string
+	Location         string
+	EstablishedYear  int64
+	Visitors         *string
+	Management       *string
 }
 
-func (q *Queries) GetNationalPark(ctx context.Context, name sql.NullString) (GetNationalParkRow, error) {
+func (q *Queries) GetNationalPark(ctx context.Context, name string) (GetNationalParkRow, error) {
 	row := q.db.QueryRowContext(ctx, getNationalPark, name)
 	var i GetNationalParkRow
 	err := row.Scan(
@@ -404,7 +400,7 @@ SELECT
   np.water_percentages AS water_percentages,
   np.map_url AS map_url,
   np.location AS location,
-  np.established AS established_year,
+  np.established_year AS established_year,
   np.visitors AS visitors,
   np.management AS management
 FROM
@@ -421,19 +417,19 @@ GROUP BY
 
 type GetNationalParksRow struct {
 	ID               int64
-	Name             sql.NullString
-	Description      sql.NullString
-	Region           sql.NullString
+	Name             string
+	Description      string
+	Region           string
 	Images           interface{}
 	IntlStatuses     interface{}
 	TotalArea        interface{}
 	Coordinate       interface{}
-	WaterPercentages sql.NullString
-	MapUrl           sql.NullString
-	Location         sql.NullString
-	EstablishedYear  sql.NullInt64
-	Visitors         sql.NullString
-	Management       sql.NullString
+	WaterPercentages *string
+	MapUrl           *string
+	Location         string
+	EstablishedYear  int64
+	Visitors         *string
+	Management       *string
 }
 
 func (q *Queries) GetNationalParks(ctx context.Context) ([]GetNationalParksRow, error) {

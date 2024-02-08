@@ -4,63 +4,60 @@
 
 package db
 
-import (
-	"database/sql"
-)
+import ()
 
 type Image struct {
 	ID     int64
-	Link   sql.NullString
-	Title  sql.NullString
-	Date   sql.NullString
-	Source sql.NullString
-	Author sql.NullString
-	Src    sql.NullString
+	Link   string
+	Title  string
+	Date   *string
+	Source *string
+	Author *string
+	Src    *string
 }
 
 type ImageLicense struct {
-	ImageID   sql.NullInt64
-	LicenseID sql.NullInt64
+	ImageID   int64
+	LicenseID int64
 }
 
 type IntlStatus struct {
 	ID   int64
-	Name sql.NullString
-	Link sql.NullString
+	Name string
+	Link *string
 }
 
 type License struct {
 	ID   int64
-	Type sql.NullString
-	Name sql.NullString
-	Link sql.NullString
+	Type string
+	Name string
+	Link *string
 }
 
 type NationalPark struct {
 	ID                  int64
-	Name                sql.NullString
-	Link                sql.NullString
-	Year                sql.NullInt64
-	TotalAreaInKm       sql.NullInt64
-	TotalAreaInMiles    sql.NullInt64
-	WaterPercentages    sql.NullString
-	Region              sql.NullString
-	Description         sql.NullString
-	CoordinateLatitude  sql.NullFloat64
-	CoordinateLongitude sql.NullFloat64
-	MapUrl              sql.NullString
-	Location            sql.NullString
-	Established         sql.NullInt64
-	Visitors            sql.NullString
-	Management          sql.NullString
+	Name                string
+	Link                *string
+	TotalAreaInKm       *int64
+	TotalAreaInMiles    *int64
+	WaterPercentages    *string
+	Region              string
+	Description         string
+	CoordinateLatitude  float64
+	CoordinateLongitude float64
+	MapUrl              *string
+	Location            string
+	EstablishedYear     int64
+	Visitors            *string
+	Management          *string
 }
 
 type NationalParkImage struct {
-	NationalParkID sql.NullInt64
-	ImageID        sql.NullInt64
+	NationalParkID int64
+	ImageID        int64
 }
 
 type NationalParkIntlStatus struct {
-	NationalParkID sql.NullInt64
-	IntlStatusID   sql.NullInt64
+	NationalParkID int64
+	IntlStatusID   int64
 }

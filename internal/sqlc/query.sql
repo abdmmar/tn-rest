@@ -47,7 +47,7 @@ SELECT
   np.water_percentages AS water_percentages,
   np.map_url AS map_url,
   np.location AS location,
-  np.established AS established_year,
+  np.established_year AS established_year,
   np.visitors AS visitors,
   np.management AS management
 FROM
@@ -110,7 +110,7 @@ SELECT
   np.water_percentages AS water_percentages,
   np.map_url AS map_url,
   np.location AS location,
-  np.established AS established_year,
+  np.established_year AS established_year,
   np.visitors AS visitors,
   np.management AS management
 FROM
@@ -133,7 +133,6 @@ INSERT INTO
     description,
     region,
     link,
-    year,
     total_area_in_km,
     total_area_in_miles,
     water_percentages,
@@ -141,12 +140,12 @@ INSERT INTO
     coordinate_longitude,
     map_url,
     location,
-    established,
+    established_year,
     visitors,
     management
   )
 VALUES
-  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id;
+  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id;
 
 -- name: GetLicense :one
 SELECT * FROM license WHERE id = ? LIMIT 1; 
