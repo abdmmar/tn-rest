@@ -67,12 +67,25 @@ type NewResponse struct {
 }
 
 type NationalPark struct {
-	Ctx     context.Context
-	Queries *db.Queries
-	DB      *sql.DB
+	Ctx context.Context
+	DB  *sql.DB
+}
+
+func (np NationalPark) GetNationalParks() ([]db.GetNationalParksRow, error) {
+	queries := db.New(np.DB)
+
+	rows, err := queries.GetNationalParks(np.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
 }
 
 func (np NationalPark) CreateNationalPark(input CreateNationalParkInput) error {
+	queries := db.New(np.DB)
+
 	tx, err := np.DB.Begin()
 
 	if err != nil {
@@ -80,7 +93,7 @@ func (np NationalPark) CreateNationalPark(input CreateNationalParkInput) error {
 	}
 
 	defer tx.Rollback()
-	qtx := np.Queries.WithTx(tx)
+	qtx := queries.WithTx(tx)
 
 	nationParkId, err := qtx.CreateNationalPark(np.Ctx, db.CreateNationalParkParams{
 		Name:                sql.NullString{String: input.Name, Valid: true},
@@ -216,9 +229,7 @@ type CreateNationalParkInput struct {
 }
 
 type NationalParkHandler struct {
-	Ctx     context.Context
-	Queries *db.Queries
-	DB      *sql.DB
+	Service *NationalPark
 }
 
 func (h NationalParkHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -230,13 +241,7 @@ func (h NationalParkHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	np := NationalPark{
-		Ctx:     h.Ctx,
-		Queries: h.Queries,
-		DB:      h.DB,
-	}
-
-	if err := np.CreateNationalPark(payload); err != nil {
+	if err := h.Service.CreateNationalPark(payload); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -254,7 +259,7 @@ func (h NationalParkHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h NationalParkHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.Queries.GetNationalParks(h.Ctx)
+	rows, err := h.Service.GetNationalParks()
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
