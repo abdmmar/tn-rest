@@ -3,32 +3,38 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
-	"tn-rest/internal/db"
+	"tn-rest/cmd/server/router"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func GetConnection() (context.Context, *db.Queries) {
+func teardown(db *sql.DB) {
+	if db != nil {
+		if err := db.Close(); err != nil {
+			log.Fatal("failed to close database connection", err.Error())
+		} else {
+			log.Fatal("successfully closed database connection")
+		}
+	}
+}
+
+func main() {
 	ctx := context.Background()
 	dbx, err := sql.Open("sqlite3", "national_park.db")
 
+	defer teardown(dbx)
 	if err != nil {
 		panic(err)
 	}
 
-	queries := db.New(dbx)
+	routing := router.NewRouter()
 
-	return ctx, queries
-}
+	nationalPark := NationalParkHandler{&NationalPark{ctx, dbx}}
+	routing.GET("/api/national_park", nationalPark.GetAll)
+	routing.POST("/api/national_park", nationalPark.Create)
 
-func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Welcome to Indonesia National Park API")
-	})
-
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Printf("🚀 server listening on http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", routing))
 }
