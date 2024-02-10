@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"tn-rest/internal/db"
 
@@ -21,7 +22,42 @@ type NationalPark struct {
 	DB  *sql.DB
 }
 
-func (np NationalPark) GetNationalParks() ([]db.GetNationalParksRow, error) {
+type GetNationalParks struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Region      string `json:"region"`
+	Images      []struct {
+		Id     int64  `json:"id"`
+		Link   string `json:"link"`
+		Title  string `json:"title"`
+		Date   string `json:"date"`
+		Source string `json:"source"`
+		Author string `json:"author"`
+		Src    string `json:"src"`
+	} `json:"images"`
+	IntlStatuses []struct {
+		Id   int     `json:"id"`
+		Name string  `json:"name"`
+		Link *string `json:"link"`
+	} `json:"intlStatuses"`
+	TotalArea struct {
+		Km    int `json:"km"`
+		Miles int `json:"miles"`
+	} `json:"totalrea"`
+	Coordinate struct {
+		Lat  float64 `json:"lat"`
+		Long float64 `json:"long"`
+	} `json:"coordinate"`
+	WaterPercentages *string `json:"waterPercentages"`
+	MapUrl           *string `json:"MapUrl"`
+	Location         string  `json:"location"`
+	EstablishedYear  int     `json:"establishedYear"`
+	Visitors         *string `json:"visitors"`
+	Management       *string `json:"management"`
+}
+
+func (np NationalPark) GetNationalParks() ([]GetNationalParks, error) {
 	queries := db.New(np.DB)
 
 	rows, err := queries.GetNationalParks(np.Ctx)
@@ -30,55 +66,69 @@ func (np NationalPark) GetNationalParks() ([]db.GetNationalParksRow, error) {
 		return nil, err
 	}
 
-	return rows, nil
-}
+	for i := range rows {
+		if err := json.Unmarshal([]byte(fmt.Sprint(rows[i].Images)), &rows[i].Images); err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(fmt.Sprint(rows[i].TotalArea)), &rows[i].TotalArea); err != nil {
+			fmt.Println("error", err)
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(fmt.Sprint(rows[i].IntlStatuses)), &rows[i].IntlStatuses); err != nil {
+			fmt.Println("error", err)
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(fmt.Sprint(rows[i].Coordinate)), &rows[i].Coordinate); err != nil {
+			fmt.Println("error", err)
+			return nil, err
+		}
+	}
 
-type CreateTotalAreaInput struct {
-	Km    *int64 `json:"km"`
-	Miles *int64 `json:"miles"`
-}
+	rowsByte, err := json.Marshal(rows)
+	var list []GetNationalParks
+	if err := json.Unmarshal(rowsByte, &list); err != nil {
+		return nil, err
+	}
 
-type CreateCoordinateInput struct {
-	Lat  float64 `json:"latitude"`
-	Long float64 `json:"longitude"`
-}
-
-type CreateIntlStatusInput struct {
-	Name string  `json:"name"`
-	Link *string `json:"link"`
-}
-
-type CreateLicenseInput struct {
-	Type string  `json:"type"`
-	Name string  `json:"name"`
-	Link *string `json:"link"`
-}
-
-type CreateImageInput struct {
-	Link   string  `json:"link"`
-	Title  string  `json:"title"`
-	Date   *string `json:"date"`
-	Source *string `json:"source"`
-	Author *string `json:"author"`
-	Src    *string `json:"src"`
+	return list, nil
 }
 
 type CreateNationalParkInput struct {
-	Name             string                `json:"name"`
-	Description      string                `json:"description"`
-	Region           string                `json:"region"`
-	Link             *string               `json:"link"`
-	WaterPercentages *string               `json:"water_percentages"`
-	MapUrl           *string               `json:"map_url"`
-	Location         string                `json:"location"`
-	EstablishedYear  int64                 `json:"established_year"`
-	Visitors         *string               `json:"visitors"`
-	Management       *string               `json:"management"`
-	TotalArea        CreateTotalAreaInput  `json:"total_area"`
-	Coordinate       CreateCoordinateInput `json:"coordinate"`
-	License          CreateLicenseInput    `json:"license"`
-	Image            CreateImageInput      `json:"image"`
-	IntlStatus       CreateIntlStatusInput `json:"intl_status"`
+	Name             string  `json:"name"`
+	Description      string  `json:"description"`
+	Region           string  `json:"region"`
+	Link             *string `json:"link"`
+	WaterPercentages *string `json:"water_percentages"`
+	MapUrl           *string `json:"map_url"`
+	Location         string  `json:"location"`
+	EstablishedYear  int64   `json:"established_year"`
+	Visitors         *string `json:"visitors"`
+	Management       *string `json:"management"`
+	TotalArea        struct {
+		Km    *int64 `json:"km"`
+		Miles *int64 `json:"miles"`
+	} `json:"total_area"`
+	Coordinate struct {
+		Lat  float64 `json:"latitude"`
+		Long float64 `json:"longitude"`
+	} `json:"coordinate"`
+	License struct {
+		Type string  `json:"type"`
+		Name string  `json:"name"`
+		Link *string `json:"link"`
+	} `json:"license"`
+	Image struct {
+		Link   string  `json:"link"`
+		Title  string  `json:"title"`
+		Date   *string `json:"date"`
+		Source *string `json:"source"`
+		Author *string `json:"author"`
+		Src    *string `json:"src"`
+	} `json:"image"`
+	IntlStatus struct {
+		Name string  `json:"name"`
+		Link *string `json:"link"`
+	} `json:"intl_status"`
 }
 
 func (np NationalPark) CreateNationalPark(input CreateNationalParkInput) error {
@@ -215,8 +265,8 @@ func (h NationalParkHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Message string `json:"message"`
-		Data    any    `json:"data"`
+		Message string             `json:"message"`
+		Data    []GetNationalParks `json:"data"`
 	}{
 		Message: "successfully get national parks",
 		Data:    rows,

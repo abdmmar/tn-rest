@@ -29,12 +29,12 @@ func main() {
 		panic(err)
 	}
 
-	routing := router.NewRouter()
+	route := router.NewRouter()
 
 	nationalPark := NationalParkHandler{&NationalPark{ctx, dbx}}
-	routing.GET("/api/national_park", nationalPark.GetAll)
-	routing.POST("/api/national_park", nationalPark.Create)
+	route.GET("/api/national_park", nationalPark.GetAll)
+	route.POST("/api/national_park", nationalPark.Create)
 
 	log.Printf("🚀 server listening on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", routing))
+	log.Fatal(http.ListenAndServe(":8080", route))
 }
