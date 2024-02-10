@@ -50,7 +50,7 @@ type GetNationalParks struct {
 		Long float64 `json:"long"`
 	} `json:"coordinate"`
 	WaterPercentages *string `json:"waterPercentages"`
-	MapUrl           *string `json:"MapUrl"`
+	MapUrl           *string `json:"mapUrl"`
 	Location         string  `json:"location"`
 	EstablishedYear  int     `json:"establishedYear"`
 	Visitors         *string `json:"visitors"`
