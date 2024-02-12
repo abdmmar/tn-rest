@@ -33,7 +33,7 @@ func main() {
 
 	route := router.NewRouter()
 
-	nationalPark := handler.NationalParkHandler{&service.NationalParkService{ctx, dbx}}
+	nationalPark := handler.NationalParkHandler{Service: &service.NationalParkService{Ctx: ctx, DB: dbx}}
 	route.GET("/api/national_park", nationalPark.GetAll)
 	route.POST("/api/national_park", nationalPark.Create)
 
