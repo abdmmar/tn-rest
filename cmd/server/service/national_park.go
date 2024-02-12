@@ -1,23 +1,16 @@
-package main
+package service
 
 import (
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"tn-rest/internal/db"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type NewResponse struct {
-	Message string `json:"message"`
-	Data    any    `json:"data ,omitempty"`
-	Error   any    `json:"error ,omitempty"`
-}
-
-type NationalPark struct {
+type NationalParkService struct {
 	Ctx context.Context
 	DB  *sql.DB
 }
@@ -57,7 +50,7 @@ type GetNationalParks struct {
 	Management       *string `json:"management"`
 }
 
-func (np NationalPark) GetNationalParks() ([]GetNationalParks, error) {
+func (np NationalParkService) GetNationalParks() ([]GetNationalParks, error) {
 	queries := db.New(np.DB)
 
 	rows, err := queries.GetNationalParks(np.Ctx)
@@ -131,7 +124,7 @@ type CreateNationalParkInput struct {
 	} `json:"intl_status"`
 }
 
-func (np NationalPark) CreateNationalPark(input CreateNationalParkInput) error {
+func (np NationalParkService) CreateNationalPark(input CreateNationalParkInput) error {
 	queries := db.New(np.DB)
 
 	tx, err := np.DB.Begin()
@@ -224,62 +217,4 @@ func (np NationalPark) CreateNationalPark(input CreateNationalParkInput) error {
 	}
 
 	return tx.Commit()
-}
-
-type NationalParkHandler struct {
-	Service *NationalPark
-}
-
-func (h NationalParkHandler) Create(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	payload := CreateNationalParkInput{}
-
-	if err := decoder.Decode(&payload); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := h.Service.CreateNationalPark(payload); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	res, err := json.Marshal(NewResponse{Message: "successfully create a national park"})
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
-}
-
-func (h NationalParkHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.Service.GetNationalParks()
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	data := struct {
-		Message string             `json:"message"`
-		Data    []GetNationalParks `json:"data"`
-	}{
-		Message: "successfully get national parks",
-		Data:    rows,
-	}
-
-	res, err := json.Marshal(data)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
 }
