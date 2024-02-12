@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"tn-rest/cmd/server/router"
+	"tn-rest/cmd/server/handler"
+	"tn-rest/cmd/server/service"
+	"tn-rest/pkg/router"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -31,7 +33,7 @@ func main() {
 
 	route := router.NewRouter()
 
-	nationalPark := NationalParkHandler{&NationalPark{ctx, dbx}}
+	nationalPark := handler.NationalParkHandler{&service.NationalParkService{ctx, dbx}}
 	route.GET("/api/national_park", nationalPark.GetAll)
 	route.POST("/api/national_park", nationalPark.Create)
 
